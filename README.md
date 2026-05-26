@@ -94,13 +94,24 @@ const storage = createQueryCacheSqlStorageAdapter({
   maxLogEntries: 1024
 });
 
+await storage.initialize();
+
 const persistence = persistQueryCache(cache, storage, {
+  autoHydrate: true,
   debounceMs: 25
 });
 
-await storage.initialize();
-await persistence.hydrate();
+await persistence.ready;
+
+cache.writeQuery(['todos'], [
+  { __typename: 'Todo', id: '1', text: 'Ship', done: false }
+]);
+
+await persistence.flush();
+const retainedChanges = await storage.readChangeLog();
 ```
+
+`persistQueryCache()` appends structured cache changes to the adapter change-log table automatically because this adapter exposes `appendChange(entry)`. On a restarted process it reads the retained log once and continues from the highest retained `seq`. Use `compactOnFlush: true` when a flush should write a checkpoint snapshot and clear the adapter-owned log in the same transaction hook.
 
 ## API
 

@@ -32,13 +32,11 @@ async function runCase(caseId, rng) {
   const persistence = persistQueryCache(cache, storage, { debounceMs: 1000000 });
   const expectedByGroup = new Map();
   const groups = makeGroups(rng);
-  let seq = 0;
 
   for (const group of groups) {
     const todos = makeTodos(group, rng);
     expectedByGroup.set(group, clone(todos));
     cache.writeQuery(['todos', { group }], todos);
-    await storage.appendChange({ seq: ++seq, type: 'query', key: ['todos', { group }], hash: cache.getQueryHash(['todos', { group }]), patchOperations: todos.length, stale: false, updatedAt: caseId });
   }
   await persistence.flush();
 
@@ -51,7 +49,6 @@ async function runCase(caseId, rng) {
         merge: (existing, incoming) => mergeOffsetPage(existing, incoming, { offset: todos.length })
       });
       todos.push(clone(page[0]));
-      await storage.appendChange({ seq: ++seq, type: 'query', key: ['todos', { group }], hash: cache.getQueryHash(['todos', { group }]), patchOperations: 1, stale: false, updatedAt: caseId });
     } else {
       const index = randomInt(rng, todos.length);
       const id = todos[index].id;
@@ -62,7 +59,6 @@ async function runCase(caseId, rng) {
       }));
       todos[index].done = !todos[index].done;
       todos[index].revision++;
-      await storage.appendChange({ seq: ++seq, type: 'entity', entityId: 'Todo:' + id, patchOperations: 1 });
     }
 
     await persistence.flush();
