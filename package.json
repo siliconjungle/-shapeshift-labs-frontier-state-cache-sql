@@ -53,7 +53,7 @@
     "local-first"
   ],
   "dependencies": {
-    "@shapeshift-labs/frontier-state-cache": "^0.1.0"
+    "@shapeshift-labs/frontier-state-cache": "0.1.2"
   },
   "devDependencies": {
     "typescript": "^6.0.3"
